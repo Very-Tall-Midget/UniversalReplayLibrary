@@ -1,0 +1,6 @@
+*.bat
+Release
+Debug
+.vs
+URL
+*.user
