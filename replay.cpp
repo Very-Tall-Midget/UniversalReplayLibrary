@@ -304,7 +304,7 @@ void Replay::Sort()
 	std::sort(clicks.begin(), clicks.end());
 }
 
-void Replay::Merge(Replay other, bool forcePlayer2)
+void Replay::Merge(Replay& other, bool forcePlayer2)
 {
 	for (Click& click : other.clicks)
 	{
