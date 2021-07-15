@@ -304,6 +304,21 @@ void Replay::Sort()
 	std::sort(clicks.begin(), clicks.end());
 }
 
+void Replay::Merge(Replay other, bool forcePlayer2)
+{
+	for (Click& click : other.clicks)
+	{
+		if (click.type == InputType::None) continue;
+		if (forcePlayer2)
+		{
+			bool press = click.type == InputType::Player1Down || click.type == InputType::Player2Down;
+			click.type = press ? InputType::Player2Down : InputType::Player2Up;
+		}
+		AddClick(click);
+	}
+	Sort();
+}
+
 Replay::ReplayType Replay::GetType() const
 {
 	return type;
@@ -337,6 +352,7 @@ std::string Replay::ToString(size_t* expectedSize, bool* success)
 
 	for (Click& click : clicks)
 	{
+		if (click.type == InputType::None) continue;
 		//str.append(*ReCa<char**>(&click.type), 1);
 		str += (char)click.type;
 		switch (type)

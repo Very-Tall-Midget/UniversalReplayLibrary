@@ -63,6 +63,7 @@ public:
 	void MoveClickDown(size_t click);
 	void DeleteClick(size_t click);
 	void Sort();
+	void Merge(Replay other, bool forcePlayer2=false);
 
 	ReplayType GetType() const;
 	float GetFps() const;
