@@ -40,7 +40,7 @@ Replay::Replay(float fps, ReplayType type)
 	clicks.clear();
 }
 
-Replay Replay::Load(const char* path, bool* success)
+Replay* Replay::Load(const char* path, bool* success)
 {
 	std::ifstream file(path);
 	if (!file.fail())
@@ -58,12 +58,12 @@ Replay Replay::Load(const char* path, bool* success)
 
 	printf("Failed to open file `%s`, error code: %d\n", path, GetLastError());
 	if (success) *success = false;
-	return Replay();
+	return new Replay(60.0f, ReplayType::Frames);
 }
 
-Replay Replay::FromString(const char* bytes, size_t length, bool* success)
+Replay* Replay::FromString(const char* bytes, size_t length, bool* success)
 {
-	Replay replay;
+	Replay* replay = new Replay;
 	{
 		const float* p_fps = ReCa<const float*>(bytes);
 		if (!p_fps)
@@ -71,7 +71,7 @@ Replay Replay::FromString(const char* bytes, size_t length, bool* success)
 			if (success) *success = false;
 			return replay;
 		}
-		replay.fps = *p_fps;
+		replay->fps = *p_fps;
 	}
 	{
 		const ReplayType* p_type = ReCa<const ReplayType*>(bytes + 4);
@@ -80,7 +80,7 @@ Replay Replay::FromString(const char* bytes, size_t length, bool* success)
 			if (success) *success = false;
 			return replay;
 		}
-		replay.type = *p_type;
+		replay->type = *p_type;
 	}
 
 	size_t pos = 5;
@@ -99,7 +99,7 @@ Replay Replay::FromString(const char* bytes, size_t length, bool* success)
 		}
 
 		int xpos = -1, frame = -1;
-		switch (replay.type)
+		switch (replay->type)
 		{
 		case ReplayType::XPos:
 		{
@@ -149,7 +149,7 @@ Replay Replay::FromString(const char* bytes, size_t length, bool* success)
 			break;
 		}
 
-		replay.AddClick({ inputType, xpos, frame });
+		replay->AddClick({ inputType, xpos, frame });
 	}
 
 	if (success) *success = true;
@@ -231,7 +231,7 @@ std::vector<Replay::InputType> Replay::GetCurrentClicks(int xpos, int frame)
 
 Replay::Click& Replay::GetLastClick(bool player2)
 {
-	for (size_t i = currentSearch - 1; ; ++i)
+	for (long i = currentSearch - 1; i >= 0; --i)
 	{
 		switch (clicks[i].type)
 		{
@@ -244,8 +244,6 @@ Replay::Click& Replay::GetLastClick(bool player2)
 			if (player2) return clicks[i];
 			break;
 		}
-
-		if (i == 0) break; // Needs to check after. That's why not in for statement
 	}
 
 	Click out = { InputType::None, -1, -1 };
@@ -319,6 +317,11 @@ void Replay::Merge(Replay& other, bool forcePlayer2)
 	Sort();
 }
 
+void Replay::SetCurrentSearch(size_t currentSearch)
+{
+	this->currentSearch = currentSearch;
+}
+
 Replay::ReplayType Replay::GetType() const
 {
 	return type;
@@ -332,6 +335,11 @@ float Replay::GetFps() const
 std::vector<Replay::Click> Replay::GetClicks() const
 {
 	return clicks;
+}
+
+size_t Replay::Size() const
+{
+	return clicks.size();
 }
 
 std::string Replay::ToString(size_t* expectedSize, bool* success)

@@ -1,5 +1,5 @@
-#ifndef REPLAY_H
-#define REPLAY_H
+#ifndef __URL_REPLAY_H__
+#define __URL_REPLAY_H__
 
 #include <stdint.h>
 #include <vector>
@@ -44,8 +44,8 @@ public:
 	Replay() = default;
 	explicit Replay(float fps, ReplayType type);
 
-	static Replay Load(const char* path, bool* success=nullptr);
-	static Replay FromString(const char* bytes, size_t length, bool* success=nullptr);
+	static Replay* Load(const char* path, bool* success=nullptr);
+	static Replay* FromString(const char* bytes, size_t length, bool* success=nullptr);
 
 	void AddClick(const Click& click);
 	void InsertClick(size_t position, const Click& click);
@@ -63,11 +63,14 @@ public:
 	void MoveClickDown(size_t click);
 	void DeleteClick(size_t click);
 	void Sort();
-	void Merge(Replay other, bool forcePlayer2=false);
+	void Merge(Replay& other, bool forcePlayer2=false);
+
+	void SetCurrentSearch(size_t currentSearch);
 
 	ReplayType GetType() const;
 	float GetFps() const;
 	std::vector<Click> GetClicks() const;
+	size_t Size() const;
 
 	std::string ToString(size_t* expectedSize=nullptr, bool* success=nullptr);
 	bool Save(const char* path);
@@ -75,4 +78,4 @@ public:
 
 URL_NS_END
 
-#endif // REPLAY_H
+#endif // __URL_REPLAY_H__
