@@ -42,7 +42,7 @@ Replay::Replay(float fps, ReplayType type)
 
 Replay* Replay::Load(const char* path, bool* success)
 {
-	std::ifstream file(path);
+	std::ifstream file(path, std::ios::binary);
 	if (!file.fail())
 	{
 		file.seekg(0, std::ios::end);
@@ -170,7 +170,7 @@ void Replay::Reset(int xpos, int frame, bool playing)
 {
 	if (playing)
 	{
-		if (xpos == 0 && frame == 0) currentSearch = 0;
+		if ((xpos == -1 || xpos == 0) && (frame == -1 || frame == 0)) currentSearch = 0;
 		else
 		{
 			// While current click is in the past, move back one
@@ -335,6 +335,11 @@ float Replay::GetFps() const
 std::vector<Replay::Click> Replay::GetClicks() const
 {
 	return clicks;
+}
+
+size_t Replay::GetCurrentSearch() const
+{
+	return currentSearch;
 }
 
 size_t Replay::Size() const

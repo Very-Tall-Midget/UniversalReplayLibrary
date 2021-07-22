@@ -70,6 +70,7 @@ public:
 	ReplayType GetType() const;
 	float GetFps() const;
 	std::vector<Click> GetClicks() const;
+	size_t GetCurrentSearch() const;
 	size_t Size() const;
 
 	std::string ToString(size_t* expectedSize=nullptr, bool* success=nullptr);
