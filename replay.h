@@ -64,6 +64,7 @@ public:
 	void DeleteClick(size_t click);
 	void Sort();
 	void Merge(Replay& other, bool forcePlayer2=false);
+	void Clean();
 
 	void SetCurrentSearch(size_t currentSearch);
 

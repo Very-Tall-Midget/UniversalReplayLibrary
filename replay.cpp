@@ -317,6 +317,23 @@ void Replay::Merge(Replay& other, bool forcePlayer2)
 	Sort();
 }
 
+void Replay::Clean()
+{
+	for (currentSearch = 0; currentSearch < Size(); currentSearch++)
+	{
+		InputType type = clicks[currentSearch].type;
+		if (type == InputType::None) continue;
+		bool player2 = type == InputType::Player2Down || type == InputType::Player2Up;
+		if (GetLastClick(player2).type == type)
+		{
+			clicks.erase(clicks.begin() + currentSearch);
+			currentSearch--;
+		}
+	}
+
+	currentSearch = 0;
+}
+
 void Replay::SetCurrentSearch(size_t currentSearch)
 {
 	this->currentSearch = currentSearch;
