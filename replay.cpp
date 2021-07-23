@@ -172,12 +172,10 @@ void Replay::Reset(int xpos, int frame, bool playing)
 	{
 		if ((xpos == -1 || xpos == 0) && (frame == -1 || frame == 0)) currentSearch = 0;
 		else
-		{
 			// While current click is in the past, move back one
 			while (currentSearch > 0 && ((type == ReplayType::Frames || clicks[currentSearch].xpos == -1) ? true : clicks[currentSearch].xpos >= xpos) &&
 				((type == ReplayType::XPos || clicks[currentSearch].frame == -1) ? true : clicks[currentSearch].frame >= frame))
 				currentSearch--;
-		}
 	}
 	else
 	{
@@ -192,7 +190,7 @@ void Replay::Reset(int xpos, int frame, bool playing)
 
 void Replay::ForAllCurrentClicks(int xpos, int frame, std::function<void(Replay::Click&)> func)
 {
-	Click& click = GetCurrentClick(xpos, frame);
+	Click click = GetCurrentClick(xpos, frame);
 	while (click.type != InputType::None)
 	{
 		func(click);
