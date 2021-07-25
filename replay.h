@@ -51,6 +51,7 @@ public:
 	void InsertClick(size_t position, const Click& click);
 
 	void Reset(int xpos=0, int frame=0, bool playing=false);
+	void Finalise();
 
 	void ForAllCurrentClicks(int xpos, int frame, std::function<void(Click&)> func);
 	Click& GetCurrentClick(int xpos, int frame);

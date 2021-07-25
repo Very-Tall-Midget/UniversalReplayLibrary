@@ -36,9 +36,7 @@ bool Replay::Click::operator==(const Click& other) const
 
 Replay::Replay(float fps, ReplayType type)
 	: fps(fps), type(type)
-{
-	clicks.clear();
-}
+{}
 
 Replay* Replay::Load(const char* path, bool* success)
 {
@@ -84,6 +82,9 @@ Replay* Replay::FromString(const char* bytes, size_t length, bool* success)
 	}
 
 	size_t pos = 5;
+
+	size_t replaySize = (length - 5) / (replay->type == ReplayType::Both ? 9 : 5);
+	replay->clicks.reserve(replaySize);
 
 	while (pos < length)
 	{
@@ -152,13 +153,15 @@ Replay* Replay::FromString(const char* bytes, size_t length, bool* success)
 		replay->AddClick({ inputType, xpos, frame });
 	}
 
+	replay->Finalise();
+
 	if (success) *success = true;
 	return replay;
 }
 
 void Replay::AddClick(const Click& click)
 {
-	clicks.push_back(click);
+	clicks.emplace_back(click);
 }
 
 void Replay::InsertClick(size_t position, const Click& click)
@@ -186,6 +189,11 @@ void Replay::Reset(int xpos, int frame, bool playing)
 		};
 		clicks.erase(std::remove_if(clicks.begin(), clicks.end(), shouldRemove), clicks.end());
 	}
+}
+
+void Replay::Finalise()
+{
+	clicks.shrink_to_fit();
 }
 
 void Replay::ForAllCurrentClicks(int xpos, int frame, std::function<void(Replay::Click&)> func)
@@ -265,6 +273,7 @@ Replay::Click& Replay::GetClick(int xpos, int frame)
 				clicks[i].frame <= frame))
 			return clicks[i];
 	}
+
 	Click out = { InputType::None, -1, -1 };
 	return out;
 }
@@ -302,6 +311,7 @@ void Replay::Sort()
 
 void Replay::Merge(Replay& other, bool forcePlayer2)
 {
+	clicks.reserve(clicks.size() + other.Size());
 	for (Click& click : other.clicks)
 	{
 		if (click.type == InputType::None) continue;
@@ -313,6 +323,7 @@ void Replay::Merge(Replay& other, bool forcePlayer2)
 		AddClick(click);
 	}
 	Sort();
+	Finalise();
 }
 
 void Replay::Clean()
@@ -330,6 +341,7 @@ void Replay::Clean()
 	}
 
 	currentSearch = 0;
+	Finalise();
 }
 
 void Replay::SetCurrentSearch(size_t currentSearch)
