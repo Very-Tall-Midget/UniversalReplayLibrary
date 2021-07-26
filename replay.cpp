@@ -359,7 +359,12 @@ float Replay::GetFps() const
 	return fps;
 }
 
-std::vector<Replay::Click> Replay::GetClicks() const
+std::vector<Replay::Click>& Replay::GetClicks()
+{
+	return clicks;
+}
+
+const std::vector<Replay::Click>& Replay::GetClicks() const
 {
 	return clicks;
 }
