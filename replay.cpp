@@ -38,7 +38,7 @@ Replay::Replay(float fps, ReplayType type)
 	: fps(fps), type(type)
 {}
 
-Replay* Replay::Load(const char* path, bool* success)
+Replay* Replay::Load(const wchar_t* path, bool* success)
 {
 	std::ifstream file(path, std::ios::binary);
 	if (!file.fail())
@@ -50,11 +50,12 @@ Replay* Replay::Load(const char* path, bool* success)
 		char* contents = (char*)malloc(length);
 
 		file.read(contents, length);
+		file.close();
 
 		return FromString(contents, length, success);
 	}
 
-	printf("Failed to open file `%s`, error code: %d\n", path, GetLastError());
+	wprintf(L"Failed to open file `%s`, error code: %d\n", path, GetLastError());
 	if (success) *success = false;
 	return new Replay(60.0f, ReplayType::Frames);
 }
@@ -438,10 +439,9 @@ std::string Replay::ToString(size_t* expectedSize, bool* success)
 	return str;
 }
 
-bool Replay::Save(const char* path)
+bool Replay::Save(const wchar_t* path)
 {
-	std::ofstream file;
-	file.open(path, std::ios::binary | std::ios::out | std::ios::trunc);
+	std::ofstream file(path, std::ios::binary | std::ios::out | std::ios::trunc);
 	if (!file.fail())
 	{
 		size_t size;
@@ -459,7 +459,7 @@ bool Replay::Save(const char* path)
 		return false;
 	}
 
-	printf("Failed to open file `%s`, error code: %d\n", path, GetLastError());
+	wprintf(L"Failed to open file `%s`, error code: %d\n", path, GetLastError());
 	return false;
 }
 

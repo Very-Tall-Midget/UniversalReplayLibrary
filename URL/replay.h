@@ -44,7 +44,7 @@ public:
 	Replay() = default;
 	explicit Replay(float fps, ReplayType type);
 
-	static Replay* Load(const char* path, bool* success=nullptr);
+	static Replay* Load(const wchar_t* path, bool* success=nullptr);
 	static Replay* FromString(const char* bytes, size_t length, bool* success=nullptr);
 
 	void AddClick(const Click& click);
@@ -77,7 +77,7 @@ public:
 	size_t Size() const;
 
 	std::string ToString(size_t* expectedSize=nullptr, bool* success=nullptr);
-	bool Save(const char* path);
+	bool Save(const wchar_t* path);
 };
 
 URL_NS_END

@@ -145,6 +145,7 @@
   <ItemGroup>
     <ClInclude Include="macros.h" />
     <ClInclude Include="replay.h" />
+    <ClInclude Include="url.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="replay.cpp" />
