@@ -62,29 +62,31 @@ Replay* Replay::Load(const wchar_t* path, bool* success)
 
 Replay* Replay::FromString(const char* bytes, size_t length, bool* success)
 {
+	size_t pos = 0;
+
 	Replay* replay = new Replay;
 	{
-		const float* p_fps = ReCa<const float*>(bytes);
+		const float* p_fps = ReCa<const float*>(bytes + pos);
 		if (!p_fps)
 		{
 			if (success) *success = false;
 			return replay;
 		}
 		replay->fps = *p_fps;
+		pos += 4;
 	}
 	{
-		const ReplayType* p_type = ReCa<const ReplayType*>(bytes + 4);
+		const ReplayType* p_type = ReCa<const ReplayType*>(bytes + pos);
 		if (!p_type)
 		{
 			if (success) *success = false;
 			return replay;
 		}
 		replay->type = *p_type;
+		pos++;
 	}
 
-	size_t pos = 5;
-
-	size_t replaySize = (length - 5) / (replay->type == ReplayType::Both ? 9 : 5);
+	size_t replaySize = (length - pos) / (replay->type == ReplayType::Both ? 9 : 5);
 	replay->clicks.reserve(replaySize);
 
 	while (pos < length)
@@ -380,10 +382,15 @@ size_t Replay::Size() const
 	return clicks.size();
 }
 
+bool Replay::IsDone() const
+{
+	return currentSearch == Size();
+}
+
 std::string Replay::ToString(size_t* expectedSize, bool* success)
 {
 	//			  fps, replay type, each click
-	size_t size = 4  + 1      +     (clicks.size() * (1 + 4 * (type == ReplayType::Both ? 2 : 1)));
+	size_t size = 4 +  1 +          (clicks.size() * (1 + 4 * (type == ReplayType::Both ? 2 : 1)));
 	*expectedSize = size;
 
 	std::string str;
