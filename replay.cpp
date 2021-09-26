@@ -63,28 +63,10 @@ Replay* Replay::Load(const wchar_t* path, bool* success)
 Replay* Replay::FromString(const char* bytes, size_t length, bool* success)
 {
 	size_t pos = 0;
-
 	Replay* replay = new Replay;
-	{
-		const float* p_fps = ReCa<const float*>(bytes + pos);
-		if (!p_fps)
-		{
-			if (success) *success = false;
-			return replay;
-		}
-		replay->fps = *p_fps;
-		pos += 4;
-	}
-	{
-		const ReplayType* p_type = ReCa<const ReplayType*>(bytes + pos);
-		if (!p_type)
-		{
-			if (success) *success = false;
-			return replay;
-		}
-		replay->type = *p_type;
-		pos++;
-	}
+
+	GET_REPLAY_VAR(fps, float);
+	GET_REPLAY_VAR(type, ReplayType);
 
 	size_t replaySize = (length - pos) / (replay->type == ReplayType::Both ? 9 : 5);
 	replay->clicks.reserve(replaySize);
@@ -92,64 +74,20 @@ Replay* Replay::FromString(const char* bytes, size_t length, bool* success)
 	while (pos < length)
 	{
 		InputType inputType;
-		{
-			const InputType* p_inputType = ReCa<const InputType*>(bytes + pos++);
-			if (!p_inputType)
-			{
-				if (success) *success = false;
-				return replay;
-			}
-			inputType = *p_inputType;
-		}
+		GET_VAR(inputType, InputType);
 
 		int xpos = -1, frame = -1;
 		switch (replay->type)
 		{
 		case ReplayType::XPos:
-		{
-			const int* p_xpos = ReCa<const int*>(bytes + pos);
-			if (!p_xpos)
-			{
-				if (success) *success = false;
-				return replay;
-			}
-			xpos = *p_xpos;
-			pos += 4;
-		}
+			GET_VAR(xpos, int);
 			break;
 		case ReplayType::Frames:
-		{
-			const int* p_frame = ReCa<const int*>(bytes + pos);
-			if (!p_frame)
-			{
-				if (success) *success = false;
-				return replay;
-			}
-			frame = *p_frame;
-			pos += 4;
-		}
+			GET_VAR(frame, int);
 			break;
 		case ReplayType::Both:
-		{
-			const int* p_xpos = ReCa<const int*>(bytes + pos);
-			if (!p_xpos)
-			{
-				if (success) *success = false;
-				return replay;
-			}
-			xpos = *p_xpos;
-			pos += 4;
-		}
-		{
-			const int* p_frame = ReCa<const int*>(bytes + pos);
-			if (!p_frame)
-			{
-				if (success) *success = false;
-				return replay;
-			}
-			frame = *p_frame;
-			pos += 4;
-		}
+			GET_VAR(xpos, int);
+			GET_VAR(frame, int);
 			break;
 		}
 
@@ -396,45 +334,25 @@ std::string Replay::ToString(size_t* expectedSize, bool* success)
 	std::string str;
 	str.reserve(size);
 
-	//str.append(*ReCa<char**>(&fps), 4);
-	char fpsStr[4] = {};
-	memcpy_s(fpsStr, 4, &fps, 4);
-	str.append(fpsStr, 4);
-
+	SAVE_VAR(fps, 4);
 	str += (char)type;
 
 	for (Click& click : clicks)
 	{
 		if (click.type == InputType::None) continue;
-		//str.append(*ReCa<char**>(&click.type), 1);
 		str += (char)click.type;
 		switch (type)
 		{
 		case ReplayType::XPos:
-		{
-			//str.append(*ReCa<char**>(&click.xpos), 4);
-			char xposStr[4] = {};
-			memcpy_s(xposStr, 4, &click.xpos, 4);
-			str.append(xposStr, 4);
-		} break;
+			SAVE_VAR(click.xpos, 4);
+			break;
 		case ReplayType::Frames:
-		{
-			//str.append(*ReCa<char**>(&click.frame), 4);
-			char frameStr[4] = {};
-			memcpy_s(frameStr, 4, &click.frame, 4);
-			str.append(frameStr, 4);
-		} break;
+			SAVE_VAR(click.frame, 4);
+			break;
 		case ReplayType::Both:
-		{
-			//str.append(*ReCa<char**>(&click.xpos), 4);
-			//str.append(*ReCa<char**>(&click.frame), 4);
-			char xposStr[4] = {};
-			memcpy_s(xposStr, 4, &click.xpos, 4);
-			str.append(xposStr, 4);
-			char frameStr[4] = {};
-			memcpy_s(frameStr, 4, &click.frame, 4);
-			str.append(frameStr, 4);
-		} break;
+			SAVE_VAR(click.xpos, 4);
+			SAVE_VAR(click.frame, 4);
+			break;
 		}
 	}
 
