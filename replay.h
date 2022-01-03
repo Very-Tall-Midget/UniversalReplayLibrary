@@ -68,8 +68,6 @@ public:
 	void Clean();
 
 	void SetCurrentSearch(size_t currentSearch);
-	void SetInitialMetaDataSize(size_t size);
-	void SetPerClickMetaDataSize(size_t size);
 
 	ReplayType GetType() const;
 	float GetFps() const;
@@ -77,8 +75,6 @@ public:
 	const std::vector<Click>& GetClicks() const;
 	size_t GetCurrentSearch() const;
 	size_t Size() const;
-	size_t InitialMetaDataSize() const;
-	size_t PerClickMetaDataSize() const;
 	bool IsDone() const;
 
 	std::string ToString(size_t* expectedSize=nullptr, bool* success=nullptr);
