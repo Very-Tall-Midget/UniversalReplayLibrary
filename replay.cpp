@@ -35,7 +35,7 @@ bool Replay::Click::operator==(const Click& other) const
 }
 
 Replay::Replay(float fps, ReplayType type)
-	: fps(fps), type(type)
+	: originalFps(fps), fps(fps), type(type)
 {}
 
 Replay* Replay::Load(const wchar_t* path, bool* success)
@@ -65,7 +65,8 @@ Replay* Replay::FromString(const char* bytes, size_t length, bool* success)
 	size_t pos = 0;
 	Replay* replay = new Replay;
 
-	GET_REPLAY_VAR(fps, float);
+	GET_REPLAY_VAR(originalFps, float);
+	replay->fps = replay->originalFps;
 	GET_REPLAY_VAR(type, ReplayType);
 
 	size_t replaySize = (length - pos) / (replay->type == ReplayType::Both ? 9 : 5);
@@ -91,7 +92,13 @@ Replay* Replay::FromString(const char* bytes, size_t length, bool* success)
 			break;
 		}
 
-		replay->AddClick({ inputType, xpos, frame });
+		if (inputType == InputType::FpsChange)
+		{
+			float newFps;
+			GET_VAR(newFps, float);
+			replay->AddClick({ inputType, xpos, frame, newFps });
+		}
+		else replay->AddClick({ inputType, xpos, frame });
 	}
 
 	replay->Finalise();
@@ -110,25 +117,65 @@ void Replay::InsertClick(size_t position, const Click& click)
 	clicks.insert(clicks.begin() + position, click);
 }
 
+void Replay::ChangeFps(int xpos, int frame, float newFps)
+{
+	if (newFps == fps) return;
+	AddClick({ InputType::FpsChange, xpos, frame, newFps });
+	fps = newFps;
+}
+
 void Replay::Reset(int xpos, int frame, bool playing)
 {
 	if (playing)
 	{
-		if ((xpos == -1 || xpos == 0) && (frame == -1 || frame == 0)) currentSearch = 0;
+		if (clicks.empty() || ((xpos == -1 || xpos == 0) && (frame == -1 || frame == 0)))
+		{
+			currentSearch = 0;
+			fps = originalFps;
+		}
 		else
+		{
 			// While current click is in the past, move back one
 			while (currentSearch > 0 && ((type == ReplayType::Frames || clicks[currentSearch].xpos == -1) ? true : clicks[currentSearch].xpos >= xpos) &&
 				((type == ReplayType::XPos || clicks[currentSearch].frame == -1) ? true : clicks[currentSearch].frame >= frame))
 				currentSearch--;
+
+			fps = originalFps;
+			size_t search = currentSearch;
+			for (; search > 0; --search)
+				if (clicks[search].type == InputType::FpsChange)
+				{
+					fps = clicks[search].fps;
+					break;
+				}
+			if (search == 0 && clicks[0].type == InputType::FpsChange &&
+				((type == ReplayType::Frames || clicks[currentSearch].xpos == -1) ? true : clicks[currentSearch].xpos >= xpos) &&
+				((type == ReplayType::XPos || clicks[currentSearch].frame == -1) ? true : clicks[currentSearch].frame >= frame))
+				fps = clicks[0].fps;
+		}
 	}
 	else
 	{
-		auto shouldRemove = [&](const Click& click)
+		auto shouldRemove = [&] (const Click& click)
 		{
 			return ((type == ReplayType::Frames || click.xpos == -1) ? true : click.xpos >= xpos) &&
 				((type == ReplayType::XPos || click.frame == -1) ? true : click.frame >= frame);
 		};
 		clicks.erase(std::remove_if(clicks.begin(), clicks.end(), shouldRemove), clicks.end());
+
+		fps = originalFps;
+
+		if (!clicks.empty())
+		{
+			size_t search = clicks.size() - 1;
+			for (; search > 0; --search)
+				if (clicks[search].type == InputType::FpsChange)
+				{
+					fps = clicks[search].fps;
+					break;
+				}
+			if (search == 0 && clicks[0].type == InputType::FpsChange) fps = clicks[0].fps;
+		}
 	}
 }
 
@@ -157,7 +204,11 @@ Replay::Click& Replay::GetCurrentClick(int xpos, int frame)
 		clicks[currentSearch].xpos <= xpos) ||
 		(type != ReplayType::XPos && clicks[currentSearch].frame != -1 &&
 			clicks[currentSearch].frame <= frame))
-		return clicks[currentSearch++];
+	{
+		Click& click = clicks[currentSearch++];
+		if (click.type == InputType::FpsChange) fps = click.fps;
+		return click;
+	}
 
 	return empty;
 }
@@ -334,12 +385,13 @@ std::string Replay::ToString(size_t* expectedSize, bool* success)
 	std::string str;
 	str.reserve(size);
 
-	SAVE_VAR(fps, 4);
+	SAVE_VAR(originalFps, 4);
 	str += (char)type;
 
 	for (Click& click : clicks)
 	{
 		if (click.type == InputType::None) continue;
+
 		str += (char)click.type;
 		switch (type)
 		{
@@ -353,6 +405,12 @@ std::string Replay::ToString(size_t* expectedSize, bool* success)
 			SAVE_VAR(click.xpos, 4);
 			SAVE_VAR(click.frame, 4);
 			break;
+		}
+		if (click.type == InputType::FpsChange)
+		{
+			SAVE_VAR(click.fps, 4);
+			size += 4;
+			*expectedSize += 4;
 		}
 	}
 

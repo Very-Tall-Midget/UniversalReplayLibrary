@@ -15,15 +15,16 @@ class Replay
 public:
 	enum class InputType : int8_t
 	{
-		None = -1,
+		None = -1, FpsChange = -2,
 		Player1Down = 1, Player1Up = 0,
-		Player2Down = 3, Player2Up = 2
+		Player2Down = 3, Player2Up = 2,
 	};
 
 	struct Click
 	{
 		InputType type = InputType::None;
 		int xpos = -1, frame = -1;
+		float fps = 0.f;
 
 		bool operator<(const Click& other) const;
 		bool operator>(const Click& other) const;
@@ -35,7 +36,7 @@ public:
 		XPos, Frames, Both
 	};
 private:
-	float fps = 0.0f;
+	float originalFps = 0.0f, fps = 0.0f;
 	ReplayType type = ReplayType::Frames;
 	size_t currentSearch = 0;
 
@@ -49,6 +50,7 @@ public:
 
 	void AddClick(const Click& click);
 	void InsertClick(size_t position, const Click& click);
+	void ChangeFps(int xpos, int frame, float newFps);
 
 	void Reset(int xpos=0, int frame=0, bool playing=false);
 	void Finalise();
