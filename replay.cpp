@@ -323,7 +323,7 @@ void Replay::Clean()
 	for (currentSearch = 0; currentSearch < Size(); currentSearch++)
 	{
 		InputType type = clicks[currentSearch].type;
-		if (type == InputType::None) continue;
+		if ((int)type < 0) continue;
 		bool player2 = type == InputType::Player2Down || type == InputType::Player2Up;
 		if (GetLastClick(player2).type == type)
 		{
